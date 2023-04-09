@@ -4,9 +4,9 @@ import userurl from '../assets/me.png'
 import sysurl from '../assets/gpt.png'
 // console.log(marked.parse('# Marked in the browser\n\nRendered by **marked**.'));
 let openai
-
+let apiKey
 function setKey() {
-  let apiKey = localStorage.getItem('apiKey')
+  apiKey = localStorage.getItem('apiKey')
   if (!apiKey || apiKey.length < 40) {
     alert("key 错误")
     location.href = 'login.html'
@@ -103,7 +103,7 @@ async function send() {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + openai,
+        'Authorization': 'Bearer ' + apiKey,
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
