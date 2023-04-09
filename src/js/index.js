@@ -103,7 +103,7 @@ async function send() {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer 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',
+        'Authorization': 'Bearer ' + openai,
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
