@@ -1,8 +1,8 @@
 import { Configuration, OpenAIApi } from "openai";
+import './marked.min'
 import userurl from '../assets/me.png'
 import sysurl from '../assets/gpt.png'
-
-console.log(userurl, sysurl);
+// console.log(marked.parse('# Marked in the browser\n\nRendered by **marked**.'));
 let openai
 
 function setKey() {
@@ -32,8 +32,10 @@ function initChatList() {
 }
 
 function appendItem(v) {
-  list.appendChild(createItem(v))
+  let item = createItem(v)
+  list.appendChild(item)
   scroll()
+  return item
 }
 
 function createItem(v) {
@@ -88,44 +90,97 @@ async function send() {
 
   chatHistory.push(item)
   chatStack.push(item)
+
   appendItem(item)
+  inp.innerText = ''
   if (chatStack.length >= 6) {
     chatStack.shift()
   }
 
+  let textEl
   try {
-    const completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: chatStack,
-      temperature: 0.5,
-    });
+    await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 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',
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: chatStack,
+        temperature: 0.3,
+        stream: true,
+        max_tokens: 1000
+      })
+    }).then(res => {
+      return res.body.getReader()
+    }).then(reader => {
+      let ans = '', _role = ''
+      const utf8Decoder = new TextDecoder("utf-8");
+      function getStream(reader) {
+        return reader.read().then(function (result) {
+          // 如果数据已经读取完毕，直接返回
+          if (result.done) {
+            return {
+              role: _role,
+              content: ans
+            }
+          }
 
-    if (!completion.data) {
+          let text = utf8Decoder.decode(result.value)
+
+          text.split(/\n(?=data:)/).forEach(v => {
+            if (v === 'data: [DONE]\n\n') {
+              return
+            }
+            if (!textEl) {
+              textEl = appendAns()
+            }
+            let { role, content } = JSON.parse(v.slice(6)).choices[0].delta
+            if (role) {
+              _role = role
+            }
+            if (content) {
+              ans += content
+              // textEl.innerText = ans
+              textEl.innerHTML = marked.parse(ans)
+              requestAnimationFrame(scroll)
+            }
+          })
+
+          return getStream(reader);
+        })
+      }
+      return getStream(reader)
+    }).then(item => {
+      chatHistory.push(item)
+      chatStack.push(item)
+    })
+  }
+  catch (err) {
+    if (textEl) {
+      textEl.innerText = '/n error'
+    } else {
       chatHistory.push({
         role: 'sys',
         content: "出错了！"
       })
-    } else {
-      let { role, content } = completion.data.choices[0].message
-      let ritem = {
-        role, content
-      }
-      inp.innerText = ''
-      chatHistory.push(ritem)
-      chatStack.push(ritem)
     }
-  }
-  catch (err) {
-    chatHistory.push({
-      role: 'sys',
-      content: "出错了！"
-    })
   }
   finally {
     loading = false
     btn.innerText = "发送"
-    appendItem(chatHistory[chatHistory.length - 1])
+    if (!textEl)
+      appendItem(chatHistory[chatHistory.length - 1])
   }
+}
+
+function appendAns() {
+  let item = appendItem({
+    role: "sys",
+    content: ""
+  })
+  return item.querySelector('.text')
 }
 
 function checkExit(msg) {
