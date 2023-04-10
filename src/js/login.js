@@ -3,9 +3,9 @@ window.onload = () => {
   let button = document.querySelector('button')
 
   button.addEventListener('click', () => {
-    let v = input.value
-    if (v.length < 40) {
-      alert("格式错误")
+    let v = input.value.trim()
+    if (!v) {
+      alert("请输入 key")
       return
     }
     localStorage.setItem('apiKey', v)

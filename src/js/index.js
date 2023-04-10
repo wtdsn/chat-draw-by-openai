@@ -2,12 +2,16 @@ import { Configuration, OpenAIApi } from "openai";
 import './marked.min'
 import userurl from '../assets/me.png'
 import sysurl from '../assets/gpt.png'
-// console.log(marked.parse('# Marked in the browser\n\nRendered by **marked**.'));
+import { debounce } from 'utils-h'
+
 let openai
 let apiKey
+
+
+// 设置 key
 function setKey() {
   apiKey = localStorage.getItem('apiKey')
-  if (!apiKey || apiKey.length < 40) {
+  if (!apiKey || !apiKey.trim()) {
     alert("key 错误")
     location.href = 'login.html'
   }
@@ -17,10 +21,12 @@ function setKey() {
 }
 
 
-let chatHistory = []
+// 聊天上下文
 let chatStack = []
 
-function initChatList() {
+//  聊天历史
+// let chatHistory = []
+/* function initChatList() {
   if (!chatHistory.length) return
 
   let domF = new DocumentFragment()
@@ -29,8 +35,9 @@ function initChatList() {
   })
   list.appendChild(domF)
   scroll()
-}
+} */
 
+// 聊天记录插入
 function appendItem(v) {
   let item = createItem(v)
   list.appendChild(item)
@@ -38,6 +45,7 @@ function appendItem(v) {
   return item
 }
 
+// 创建对话
 function createItem(v) {
   let item = document.createElement('li'),
     img = document.createElement('img'),
@@ -59,27 +67,29 @@ function createItem(v) {
   return item
 }
 
-function scroll() {
-  let scroll = document.querySelector('.chat_list')
-
-  scroll.scrollTo({
+// 滚动到底部
+let scroll = debounce(50, () => {
+  scrollEl.scrollTo({
     top: list.scrollHeight - list.clientHeight,
     left: 0,
     behavior: 'smooth'
   })
-}
+})
 
+// 发送消息
 let loading = false
-async function send() {
-  let msg = inp.innerText
-  if (!msg.length || !msg) {
-    alert("请输入内容")
+function send() {
+  if (loading) return
+
+  let msg = inp.innerText.trim()
+
+  if (!msg) {
+    alert("请输入有效内容！")
     return
   }
 
   checkExit(msg)
 
-  if (loading) return
   loading = true
   btn.innerText = '接收中'
 
@@ -88,15 +98,21 @@ async function send() {
     content: msg
   }
 
-  chatHistory.push(item)
   chatStack.push(item)
+  // chatHistory.push(item)
 
   appendItem(item)
   inp.innerText = ''
+
+  // 删除过多的历史记录
   if (chatStack.length >= 6) {
     chatStack.shift()
   }
 
+  sendMsg()
+}
+
+async function sendMsg() {
   let textEl
   try {
     await fetch("https://api.openai.com/v1/chat/completions", {
@@ -115,66 +131,78 @@ async function send() {
     }).then(res => {
       return res.body.getReader()
     }).then(reader => {
-      let ans = '', _role = ''
-      const utf8Decoder = new TextDecoder("utf-8");
-      function getStream(reader) {
-        return reader.read().then(function (result) {
-          // 如果数据已经读取完毕，直接返回
-          if (result.done) {
-            return {
-              role: _role,
-              content: ans
-            }
-          }
-
-          let text = utf8Decoder.decode(result.value)
-
-          text.split(/\n(?=data:)/).forEach(v => {
-            if (v === 'data: [DONE]\n\n') {
-              return
-            }
-            if (!textEl) {
-              textEl = appendAns()
-            }
-            let { role, content } = JSON.parse(v.slice(6)).choices[0].delta
-            if (role) {
-              _role = role
-            }
-            if (content) {
-              ans += content
-              // textEl.innerText = ans
-              textEl.innerHTML = marked.parse(ans)
-              requestAnimationFrame(scroll)
-            }
-          })
-
-          return getStream(reader);
-        })
-      }
       return getStream(reader)
     }).then(item => {
-      chatHistory.push(item)
+      // chatHistory.push(item)
       chatStack.push(item)
     })
   }
   catch (err) {
     if (textEl) {
-      textEl.innerText = '/n error'
-    } else {
-      chatHistory.push({
-        role: 'sys',
-        content: "出错了！"
-      })
+      textEl.innerText += '\nerror'
     }
+    /*     else {
+          chatHistory.push({
+            role: 'sys',
+            content: "出错了！"
+          })
+        } */
   }
   finally {
     loading = false
     btn.innerText = "发送"
-    if (!textEl)
-      appendItem(chatHistory[chatHistory.length - 1])
+    if (!textEl) {
+      appendItem({
+        role: "sys",
+        content: "error"
+      })
+    }
   }
 }
 
+function getStream(reader) {
+  let ans = '', _role = ''
+  const utf8Decoder = new TextDecoder("utf-8");
+  _getStream()
+
+  function _getStream() {
+    return reader.read().then(function (result) {
+      // 如果数据已经读取完毕，直接返回
+      if (result.done) {
+        return {
+          role: _role,
+          content: ans
+        }
+      }
+
+      parseText(utf8Decoder.decode(result.value))
+      return _getStream();
+    })
+  }
+}
+
+function parseText(text) {
+  text.split(/\n(?=data:)/).forEach(v => {
+    if (v === 'data: [DONE]\n\n') {
+      return ''
+    }
+    /*     if (!textEl) {
+          textEl = appendAns()
+        } */
+    let { role, content } = JSON.parse(v.slice(6)).choices[0].delta
+    /*     if (role) {
+          _role = role
+        } */
+    if (content) {
+      ans += content
+      // textEl.innerText = ans
+      textEl.innerHTML = marked.parse(ans)
+      requestAnimationFrame(scroll)
+    }
+  })
+}
+
+// 
 function appendAns() {
   let item = appendItem({
     role: "sys",
@@ -183,6 +211,7 @@ function appendAns() {
   return item.querySelector('.text')
 }
 
+// 删除 key
 function checkExit(msg) {
   if (msg === 'exit') {
     location.href = '/login.html'
@@ -190,18 +219,20 @@ function checkExit(msg) {
   }
 }
 
-let inp
-let btn
-let list
+
+let inp // 输入
+let btn  // 发送
+let list  // 聊天 list
+let scrollEl  // 聊天滚动元素
 function init() {
   setKey()
-
 
   inp = document.querySelector('.input')
   btn = document.querySelector('.send_btn')
   list = document.querySelector('.list')
-  btn.addEventListener('click', send)
+  scrollEl = document.querySelector('.chat_list')
 
-  initChatList()
+  btn.addEventListener('click', send)
+  // initChatList()
 }
 window.onload = init
