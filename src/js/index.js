@@ -7,6 +7,8 @@ import { debounce } from 'utils-h'
 let openai
 let apiKey
 
+// todo 1. 模块划分 ， 2. 封装请求
+
 
 // 设置 key
 function setKey() {
