@@ -10,6 +10,7 @@
     "vite": "^4.2.1"
   },
   "dependencies": {
+    "marked": "^4.3.0",
     "openai": "^3.2.1",
     "utils-h": "^1.1.1"
   }

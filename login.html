@@ -6,75 +6,22 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
-  <style>
-    body {
-      margin: 0;
-      height: 80vh;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .login_from {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    img {
-      width: 160px;
-      height: 160px;
-      border-radius: 50%;
-      margin-bottom: 60px;
-      background-color: #1e64dd;
-      opacity: 0.5;
-      animation: rotateS 0.3s 0.1s linear forwards;
-      transform: rotate(-180deg) scale(0.5);
-    }
-
-    @keyframes rotateS {
-      0% {
-        transform: rotate(-180deg) scale(0.5);
-      }
-
-      100% {
-        transform: rotate(0) scale(1);
-      }
-    }
-
-    input {
-      width: 300px;
-      line-height: 26px;
-      padding: 2px 6px;
-      font-size: 16px;
-      color: #010101;
-    }
-
-    .button {
-      margin-top: 20px;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 8px 30px;
-      cursor: pointer;
-    }
-
-    .button:hover {
-      box-shadow: 0 0 2px 0 #ccc;
-    }
-  </style>
+  <link rel="stylesheet" href="./src/css/login.less">
 </head>
 
 <body>
-  <div class="login_from">
+  <div class="entry_from">
     <img src="./src/assets/gpt.png" alt="">
     <input type="text" placeholder="请输入 key">
-    <button class="button">开始聊天</button>
+    <div class="btns">
+      <button class="button" id="chat">开始聊天</button>
+      <button class="button" id="draw">绘画</button>
+      <button class="button" id="del">删除key</button>
+    </div>
   </div>
 </body>
 <script type="module">
-  import './src/js/login.js'
+  import '@/js/login.js'
 </script>
 
 </html>

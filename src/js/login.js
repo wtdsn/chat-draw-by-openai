@@ -1,14 +1,34 @@
+let input
+let bns
 window.onload = () => {
-  let input = document.querySelector('input')
-  let button = document.querySelector('button')
+  input = document.querySelector('input')
+  bns = document.querySelector('.btns')
+  setKey()
 
-  button.addEventListener('click', () => {
+  bns.onclick = dandleClickBtn
+}
+
+function setKey() {
+  let k = localStorage.getItem('apiKey')
+  input.value = k
+}
+
+function dandleClickBtn(e) {
+  if (e.target === bns) return
+  let id = e.target.getAttribute('id')
+
+  if (id === 'del') {
+    localStorage.removeItem('apiKey')
+    input.value = ''
+  } else {
     let v = input.value.trim()
     if (!v) {
       alert("请输入 key")
       return
     }
     localStorage.setItem('apiKey', v)
-    location.href = 'index.html'
-  })
+    if (id === 'chat')
+      location.href = 'index.html'
+    else location.href = 'draw.html'
+  }
 }

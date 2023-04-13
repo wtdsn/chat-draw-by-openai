@@ -2,7 +2,7 @@ import userurl from '@/assets/me.png'
 import sysurl from '@/assets//gpt.png'
 import { debounce } from 'utils-h'
 import createFetchH from './fetch.js'
-import { parse } from 'marked'
+
 let apiKey
 let fetchH
 
@@ -13,24 +13,19 @@ function setKey() {
     alert("key 错误")
     location.href = 'login.html'
   }
-  fetchH = createFetchH('https://api.openai.com/v1/chat/completions', {
+  fetchH = createFetchH('https://api.openai.com/v1/images/generations', {
     method: "POST",
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + apiKey,
     },
     body: {
-      model: "gpt-3.5-turbo",
-      temperature: 0.3,
-      stream: true,
-      max_tokens: 1000
+      n: 1,
+      size: '512x512',
+      response_format: "b64_json"
     }
   })
 }
-
-
-// 聊天上下文
-let chatStack = []
 
 
 // 聊天记录插入
@@ -53,13 +48,18 @@ function createItem(v) {
     img.setAttribute('src', userurl)
     img.setAttribute('alt', 'me')
     text.setAttribute('class', 'text text_user')
+    text.innerText = v.content
   } else {
     item.setAttribute('class', 'item sys')
     img.setAttribute('src', sysurl)
     img.setAttribute('alt', 'gpt')
+    img.setAttribute('class', 'avatar')
     text.setAttribute('class', 'text text_sys')
+    text.innerHTML = `
+    <img src="${v.content}" class="draw_res" alt="">
+    `
   }
-  text.innerText = v.content
+
   item.append(img, text)
   return item
 }
@@ -89,128 +89,43 @@ function send() {
   }
 
   loading = true
-  btn.innerText = '接收中'
+  btn.innerText = '生成中'
 
-  let item = {
+  appendItem({
     role: 'user',
     content: msg
-  }
+  })
 
-  chatStack.push(item)
-
-  appendItem(item)
   inp.innerText = ''
 
-  // 删除过多的历史记录
-  if (chatStack.length >= 4) {
-    chatStack.shift()
-  }
-
-  sendMsg()
+  startDraw(msg)
 }
 
-async function sendMsg() {
-  let textEl
-  fetchH({ messages: chatStack })
+async function startDraw(msg) {
+  fetchH({ prompt: msg })
     .then(res => {
-      // 获取 reader
-      return res.body.getReader()
+      return res.json();
     })
-    .then(reader => {
-      // 读取内容
-      textEl = appendAns()
-      return getStream(reader, textEl)
-    })
-    .then(item => {
-      // 写入记录
-      chatStack.push({
-        role: item.role,
-        content: item.content.slice(0, 200)
-      })
+    .then(({ data }) => {
+      let url = 'data:image/png;base64,' + data[0].b64_json
+      appendImg(url)
     })
     .catch(err => {
       //出错
       console.log("Err", err);
-      if (textEl) {
-        textEl.innerText += '\nerror'
-      }
     })
     .finally(() => {
       loading = false
       btn.innerText = "发送"
-      if (!textEl) {
-        appendItem({
-          role: "sys",
-          content: "error"
-        })
-      }
     })
-}
-
-// 读取 stream 数据
-function getStream(reader, textEl) {
-  let ans = '', _role = ''
-  const utf8Decoder = new TextDecoder("utf-8");
-
-  return _getStream()
-
-  function _getStream() {
-    return reader.read().then(function (result) {
-      // 如果数据已经读取完毕，直接返回
-      if (result.done) {
-        return {
-          role: _role,
-          content: ans
-        }
-      }
-
-      let { role, content } = parseText(utf8Decoder.decode(result.value))
-      if (role) {
-        _role = role
-      }
-      if (content) {
-        ans += content
-      }
-
-      requestAnimationFrame(() => {
-        textEl.innerHTML = parse(ans)
-        scroll()
-      })
-
-      return _getStream();
-    })
-  }
-}
-
-// 解析数据
-function parseText(text) {
-  let info = {
-    content: ''
-  }
-  text.split(/\n(?=data:)/).forEach(v => {
-    if (v === 'data: [DONE]\n\n') {
-      return ''
-    }
-
-    let { role, content } = JSON.parse(v.slice(6)).choices[0].delta
-    if (role) {
-      info.role = role
-    }
-
-    if (content) {
-      info.content += content
-    }
-  })
-  return info
 }
 
 // 创建回答
-function appendAns() {
-  let item = appendItem({
+function appendImg(url) {
+  appendItem({
     role: "sys",
-    content: ""
+    content: url
   })
-  return item.querySelector('.text')
 }
 
 // 退出
