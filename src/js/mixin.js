@@ -3,7 +3,7 @@ export function setKey() {
   let apiKey = localStorage.getItem('apiKey').trim()
   if (!apiKey) {
     alert("key 错误")
-    location.href = 'login.html'
+    location.href = 'entry.html'
   }
   return apiKey
 }
@@ -34,6 +34,6 @@ export function shiftToWrap(inp, send) {
 // 退出
 export function checkExit(msg) {
   if (msg === 'exit') {
-    location.href = '/login.html'
+    location.href = '/entry.html'
   }
 }
