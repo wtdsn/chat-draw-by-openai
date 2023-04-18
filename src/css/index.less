@@ -8,14 +8,16 @@ body {
   flex-direction: column;
   background-color: #eee;
 
+  // 聊天内容盒子
   .chat_list {
     flex: 1;
     padding: 6px;
-    overflow: auto;
+    overflow-y: auto;
     margin-bottom: 12px;
 
     &::-webkit-scrollbar {
       width: 4px;
+      height: 4px;
     }
 
     &::-webkit-scrollbar-thumb {
@@ -65,14 +67,16 @@ body {
     }
   }
 
+  // 发送盒子
   .send_box {
     display: flex;
     align-items: center;
 
-    padding: 12px 10px;
-    background-color: #bbebfb;
+    padding: 8px;
+    background-color: #96ead3;
+    border-top: 1px solid #ccc;
 
-    .input {
+    .div_input {
       flex: 1;
       font-size: 16px;
       padding: 7px;
@@ -95,7 +99,7 @@ body {
       &::-webkit-scrollbar-thumb {
         width: 4px;
         border-radius: 4px;
-        background: linear-gradient(rgb(74, 211, 221), rgb(20, 61, 165));
+        background: linear-gradient(rgb(82, 223, 233), rgb(21, 64, 173));
       }
     }
 
@@ -109,18 +113,19 @@ body {
       letter-spacing: 3px;
       cursor: pointer;
 
-      border-radius: 3px;
+      border-radius: 4px;
       border: none;
       outline: none;
-      background: linear-gradient(20deg, rgb(49, 221, 236), rgb(72, 53, 214));
+      background: linear-gradient(130deg, rgb(235, 124, 241), rgb(96, 79, 226));
     }
   }
 }
 
+/* markdown 样式修改 */
 .list {
   .item>.text_sys {
     .draw_res {
-      padding: 10px 6px;
+      padding: 4px 0px;
       max-width: 300px;
     }
 

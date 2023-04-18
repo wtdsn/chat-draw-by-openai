@@ -2,17 +2,20 @@ import userurl from '@/assets/me.png'
 import sysurl from '@/assets//gpt.png'
 import { debounce } from 'utils-h'
 import createFetchH from './fetch.js'
+import { setKey, shiftToWrap, checkExit } from './mixin.js'
 
 let apiKey
 let fetchH
+let inp // 输入
+let btn  // 发送
+let list  // 聊天 list
+let scrollEl  // 聊天滚动元素
 
-// 设置 key
-function setKey() {
-  apiKey = localStorage.getItem('apiKey').trim()
-  if (!apiKey) {
-    alert("key 错误")
-    location.href = 'login.html'
-  }
+function init() {
+  // 设置 key
+  apiKey = setKey()
+
+  // 初始化 fetch
   fetchH = createFetchH('https://api.openai.com/v1/images/generations', {
     method: "POST",
     headers: {
@@ -25,7 +28,25 @@ function setKey() {
       response_format: "b64_json"
     }
   })
+
+
+  inp = document.querySelector('.div_input')
+  btn = document.querySelector('.send_btn')
+  list = document.querySelector('.list')
+  scrollEl = document.querySelector('.chat_list')
+
+
+  // 点击发送
+  btn.addEventListener('click', send)
+
+  /* 
+     按住 shift 可换行
+     仅按 enter 发送
+  */
+  shiftToWrap(inp, send)
 }
+
+window.onload = init
 
 
 // 聊天记录插入
@@ -46,13 +67,11 @@ function createItem(v) {
   if (v.role == 'user') {
     item.setAttribute('class', 'item user')
     img.setAttribute('src', userurl)
-    img.setAttribute('alt', 'me')
     text.setAttribute('class', 'text text_user')
     text.innerText = v.content
   } else {
     item.setAttribute('class', 'item sys')
     img.setAttribute('src', sysurl)
-    img.setAttribute('alt', 'gpt')
     img.setAttribute('class', 'avatar')
     text.setAttribute('class', 'text text_sys')
     text.innerHTML = `
@@ -82,6 +101,9 @@ function send() {
 
   // 退出
   checkExit(msg)
+
+  // 清除
+  if (checkClear(msg)) return
 
   if (!msg) {
     alert("请输入有效内容！")
@@ -116,7 +138,7 @@ async function startDraw(msg) {
     })
     .finally(() => {
       loading = false
-      btn.innerText = "发送"
+      btn.innerText = "绘画"
     })
 }
 
@@ -128,53 +150,11 @@ function appendImg(url) {
   })
 }
 
-// 退出
-function checkExit(msg) {
-  if (msg === 'exit') {
-    location.href = '/login.html'
+// 清除记录
+function checkClear(msg) {
+  if (msg === 'clear') {
+    list.innerHTML = ''
+    inp.innerHTML = ''
+    return true
   }
 }
-
-
-let inp // 输入
-let btn  // 发送
-let list  // 聊天 list
-let scrollEl  // 聊天滚动元素
-function init() {
-  // 设置 key
-  setKey()
-
-  inp = document.querySelector('.input')
-  btn = document.querySelector('.send_btn')
-  list = document.querySelector('.list')
-  scrollEl = document.querySelector('.chat_list')
-
-
-  // 点击发送
-  btn.addEventListener('click', send)
-
-
-  /* 
-     按住 shift 可换行
-     仅按 enter 发送
-  */
-  let stopSend = false
-  inp.addEventListener('keydown', (e) => {
-    if (e.key === 'Shift') {
-      stopSend = true
-    }
-
-    if (e.key === 'Enter' && !stopSend) {
-      e.preventDefault()
-      send()
-    }
-  })
-
-  inp.addEventListener('keyup', (e) => {
-    if (e.key === 'Shift') {
-      stopSend = false
-    }
-  })
-}
-
-window.onload = init
