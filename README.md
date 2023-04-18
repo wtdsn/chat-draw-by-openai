@@ -12,4 +12,9 @@
 
 如果没有，访问 `https://platform.openai.com/account/api-keys` 注册登录账号后创建
 
-在聊天界面，输入 exit ，点击发送即可退出聊天界面，删除本地 apiKey 缓存
+# use tips
+
+在聊天界面，输入 exit 回车即可退出聊天界面
+输入 clear 回车可删除聊天内容
+
+shift + enter 进行换行
