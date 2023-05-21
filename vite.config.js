@@ -13,7 +13,7 @@ export default {
     rollupOptions: {
       input: {
         index: resolve(__dirname, './index.html'),
-        login: resolve(__dirname, './login.html'),
+        login: resolve(__dirname, './entry.html'),
         draw: resolve(__dirname, './draw.html'),
       },
     },
