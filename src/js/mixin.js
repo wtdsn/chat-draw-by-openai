@@ -1,11 +1,15 @@
 // 设置 key
 export function setKey() {
-  let apiKey = localStorage.getItem('apiKey').trim()
-  if (!apiKey) {
-    alert("key 错误")
+  try {
+    let apiKey = localStorage.getItem('apiKey').trim()
+    if (!apiKey) {
+      alert("key 错误")
+      location.href = 'entry.html'
+    }
+    return apiKey
+  } catch(err) {
     location.href = 'entry.html'
   }
-  return apiKey
 }
 
 
